@@ -1,4 +1,16 @@
-# 🚀 Installation and Configuration Script for Prometheus, Node Exporter, and Grafana
+
+markdown
+Đang tải...
+# 🌐 Monitoring Stack Setup: Prometheus, Node Exporter, and Grafana  
+
+**Version**: 1.0  
+**Author**: [Trung Huynh](https://www.linkedin.com/in/trung-huynh-chi-pc01/)  
+
+![Bash](https://img.shields.io/badge/Script-Bash-blue)  
+![License](https://img.shields.io/badge/License-MIT-green)  
+![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange)  
+
+---
 
 This repository contains a Bash script that automates the installation and configuration of **Prometheus**, **Node Exporter**, and **Grafana** on an Ubuntu 20.04 system. These tools are widely used for system monitoring and visualization.
 
