@@ -20,7 +20,7 @@ Before running the script, ensure the following:
 
 ### 1️⃣ Clone the Repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/huynhtrungcip/prometheus-node-exporter-grafana-setup.git
 cd <repository-directory>
 ```
 
@@ -79,7 +79,7 @@ sudo systemctl status grafana-server
 ### 🪵 View Logs
 If any service fails, view logs for detailed error messages:
 ```bash
-journalctl -u <service-name>
+journalctl -u prometheus|node_exporter|grafana-server
 ```
 
 ## 🤝 Contribution
