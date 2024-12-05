@@ -1,6 +1,4 @@
 
-markdown
-Đang tải...
 # 🌐 Monitoring Stack Setup: Prometheus, Node Exporter, and Grafana  
 
 **Version**: 1.0  
