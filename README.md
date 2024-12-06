@@ -31,7 +31,7 @@ Before running the script, ensure the following:
 ### 1️⃣ Clone the Repository
 ```bash
 git clone https://github.com/huynhtrungcip/prometheus-node-exporter-grafana-setup.git
-cd <repository-directory>
+cd prometheus-node-exporter-grafana-setup
 ```
 
 ### 2️⃣ Make the Script Executable
