@@ -41,6 +41,7 @@ chmod +x install_monitoring.sh
 
 ### 3️⃣ Run the Script
 ```bash
+dos2unix install_monitoring.sh
 sudo ./install_monitoring.sh
 ```
 
