@@ -15,6 +15,7 @@ set -e
 # Update and Upgrade System Packages                                          #
 ################################################################################
 sudo apt-get update
+sudo apt-get install dos2unix
 
 ################################################################################
 # Install Prometheus                                                          #
