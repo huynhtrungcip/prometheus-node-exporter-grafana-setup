@@ -116,7 +116,94 @@ If any service fails, check the logs for more information:
 journalctl -u prometheus  
 journalctl -u node_exporter  
 journalctl -u grafana-server  
-```  
+```
+
+### ✅ Check Configuration File  
+
+Make sure the configuration file is as follows:  
+
+**✒prometheus.service**
+```bash  
+sudo vim /etc/systemd/system/prometheus.service 
+```
+```bash  
+[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+
+StartLimitIntervalSec=500
+StartLimitBurst=5
+
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+Restart=on-failure
+RestartSec=5s
+ExecStart=/usr/local/bin/prometheus \
+  --config.file=/etc/prometheus/prometheus.yml \
+  --storage.tsdb.path=/data \
+  --web.console.templates=/etc/prometheus/consoles \
+  --web.console.libraries=/etc/prometheus/console_libraries \
+  --web.listen-address=0.0.0.0:9090 \
+  --web.enable-lifecycle
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**✒node_exporter.service**
+```bash  
+sudo vim /etc/systemd/system/node_exporter.service 
+```
+```bash  
+[Unit]
+Description=Node Exporter
+Wants=network-online.target
+After=network-online.target
+
+StartLimitIntervalSec=500
+StartLimitBurst=5
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+Restart=on-failure
+RestartSec=5s
+ExecStart=/usr/local/bin/node_exporter \
+    --collector.logind
+
+[Install]
+WantedBy=multi-user.target 
+```
+
+**✒prometheus.yml**
+```bash  
+sudo vim /etc/prometheus/prometheus.yml 
+```
+```bash  
+...
+  - job_name: node_export
+    static_configs:
+      - targets: ["localhost:9100"]
+```
+
+**datasources.yaml**
+```bash  
+sudo vim /etc/grafana/provisioning/datasources/datasources.yaml 
+```
+```bash  
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    url: http://localhost:9090
+    isDefault: true
+```
+
 
 ### ✅ Common Fixes  
 
@@ -144,3 +231,4 @@ This repository is licensed under the **MIT License**. See the [LICENSE](LICENSE
 ---  
 
 Start monitoring your systems with ease! 🚀
+
