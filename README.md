@@ -190,7 +190,7 @@ sudo vim /etc/prometheus/prometheus.yml
       - targets: ["localhost:9100"]
 ```
 
-**datasources.yaml**
+**✒datasources.yaml**
 ```bash  
 sudo vim /etc/grafana/provisioning/datasources/datasources.yaml 
 ```
