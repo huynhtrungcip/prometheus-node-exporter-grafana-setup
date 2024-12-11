@@ -1,154 +1,122 @@
 #!/bin/bash
 
-################################################################################
-# Script to install Prometheus, Node Exporter, and Grafana on Ubuntu 20.04    #
-# Author: Trung Huynh Chi                                                       #
-# Date: 20/10/2024                                                               #
-# Description: This script automates the installation and configuration of   #
-# Prometheus, Node Exporter, and Grafana for monitoring and visualization.   #
-################################################################################
+# Author: Trung Huynh Chi
+# Script to install and configure Prometheus, Node Exporter, and Grafana on Ubuntu 20.04
 
-# Exit immediately if a command exits with a non-zero status
-set -e
+# Update the system packages to ensure the latest versions are installed
+# This is crucial for stability and compatibility.
+sudo apt update && sudo apt upgrade -y
 
-################################################################################
-# Update and Upgrade System Packages                                          #
-################################################################################
-sudo apt-get update
-sudo apt-get install dos2unix
+# Install dependencies required for downloading and extracting software packages
+# curl: For downloading files from URLs
+# tar: For extracting tar.gz files
+sudo apt install -y curl tar
 
-################################################################################
-# Install Prometheus                                                          #
-################################################################################
+# Create a dedicated user for Prometheus to enhance security
+# This user will own the Prometheus process and files.
+sudo useradd --no-create-home --shell /bin/false prometheus
 
-# Create Prometheus system user
-sudo useradd --system --no-create-home --shell /bin/false prometheus
+# Create necessary directories for Prometheus
+# /etc/prometheus: For configuration files
+# /var/lib/prometheus: For Prometheus data storage
+sudo mkdir /etc/prometheus /var/lib/prometheus
 
-# Download and extract Prometheus
-PROM_VERSION="2.32.1"
-wget https://github.com/prometheus/prometheus/releases/download/v$PROM_VERSION/prometheus-$PROM_VERSION.linux-amd64.tar.gz
-tar -xvf prometheus-$PROM_VERSION.linux-amd64.tar.gz
+# Download the latest version of Prometheus
+# Check https://prometheus.io/download/ for updated links if needed.
+curl -LO https://github.com/prometheus/prometheus/releases/download/v2.47.0/prometheus-2.47.0.linux-amd64.tar.gz
 
-# Configure Prometheus
-sudo mkdir -p /data /etc/prometheus
-cd prometheus-$PROM_VERSION.linux-amd64
-sudo mv prometheus promtool /usr/local/bin/
-sudo mv consoles/ console_libraries/ /etc/prometheus/
-sudo mv prometheus.yml /etc/prometheus/prometheus.yml
-sudo chown -R prometheus:prometheus /etc/prometheus/ /data/
-cd ..
-rm -rf prometheus-$PROM_VERSION.linux-amd64*
+# Extract the downloaded Prometheus tarball
+# The extracted files include the binaries and default configuration.
+tar -xvzf prometheus-2.47.0.linux-amd64.tar.gz
 
-# Create Prometheus systemd service file
-sudo bash -c 'cat <<EOT > /etc/systemd/system/prometheus.service
-[Unit]
+# Move the Prometheus binaries to /usr/local/bin for global accessibility
+sudo mv prometheus-2.47.0.linux-amd64/prometheus /usr/local/bin/
+sudo mv prometheus-2.47.0.linux-amd64/promtool /usr/local/bin/
+
+# Move Prometheus configuration files to /etc/prometheus
+# These include prometheus.yml and console templates.
+sudo mv prometheus-2.47.0.linux-amd64/consoles /etc/prometheus/
+sudo mv prometheus-2.47.0.linux-amd64/console_libraries /etc/prometheus/
+sudo mv prometheus-2.47.0.linux-amd64/prometheus.yml /etc/prometheus/
+
+# Set ownership of Prometheus files to the prometheus user for security
+sudo chown -R prometheus:prometheus /etc/prometheus
+sudo chown -R prometheus:prometheus /var/lib/prometheus
+
+# Clean up downloaded and extracted files to free up space
+rm -rf prometheus-2.47.0.linux-amd64 prometheus-2.47.0.linux-amd64.tar.gz
+
+# Create a systemd service file for Prometheus
+# This ensures Prometheus starts automatically on boot.
+echo "[Unit]
 Description=Prometheus
 Wants=network-online.target
 After=network-online.target
-
-StartLimitIntervalSec=500
-StartLimitBurst=5
 
 [Service]
 User=prometheus
 Group=prometheus
 Type=simple
-Restart=on-failure
-RestartSec=5s
 ExecStart=/usr/local/bin/prometheus \
   --config.file=/etc/prometheus/prometheus.yml \
-  --storage.tsdb.path=/data \
-  --web.console.templates=/etc/prometheus/consoles \
-  --web.console.libraries=/etc/prometheus/console_libraries \
-  --web.listen-address=0.0.0.0:9090 \
-  --web.enable-lifecycle
+  --storage.tsdb.path=/var/lib/prometheus/
 
 [Install]
-WantedBy=multi-user.target
-EOT'
+WantedBy=multi-user.target" | sudo tee /etc/systemd/system/prometheus.service
 
-# Enable and start Prometheus service
+# Reload systemd to recognize the new service, then enable and start Prometheus
 sudo systemctl daemon-reload
 sudo systemctl enable prometheus
 sudo systemctl start prometheus
-sudo systemctl status prometheus --no-pager
 
-################################################################################
-# Install Node Exporter                                                       #
-################################################################################
+# Install Node Exporter for monitoring system metrics
+# This exports system-level metrics for Prometheus to scrape.
+sudo useradd --no-create-home --shell /bin/false node_exporter
+curl -LO https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
+tar -xvzf node_exporter-1.6.1.linux-amd64.tar.gz
+sudo mv node_exporter-1.6.1.linux-amd64/node_exporter /usr/local/bin/
+sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter
+rm -rf node_exporter-1.6.1.linux-amd64 node_exporter-1.6.1.linux-amd64.tar.gz
 
-# Create Node Exporter system user
-sudo useradd --system --no-create-home --shell /bin/false node_exporter
-
-# Download and extract Node Exporter
-NODE_EXPORTER_VERSION="1.3.1"
-wget https://github.com/prometheus/node_exporter/releases/download/v$NODE_EXPORTER_VERSION/node_exporter-$NODE_EXPORTER_VERSION.linux-amd64.tar.gz
-tar -xvf node_exporter-$NODE_EXPORTER_VERSION.linux-amd64.tar.gz
-sudo mv node_exporter-$NODE_EXPORTER_VERSION.linux-amd64/node_exporter /usr/local/bin/
-rm -rf node_exporter-$NODE_EXPORTER_VERSION.linux-amd64*
-
-# Create Node Exporter systemd service file
-sudo bash -c 'cat <<EOT > /etc/systemd/system/node_exporter.service
-[Unit]
+# Create a systemd service file for Node Exporter
+# This ensures Node Exporter runs automatically on boot.
+echo "[Unit]
 Description=Node Exporter
 Wants=network-online.target
 After=network-online.target
-
-StartLimitIntervalSec=500
-StartLimitBurst=5
 
 [Service]
 User=node_exporter
 Group=node_exporter
 Type=simple
-Restart=on-failure
-RestartSec=5s
-ExecStart=/usr/local/bin/node_exporter --collector.logind
+ExecStart=/usr/local/bin/node_exporter
 
 [Install]
-WantedBy=multi-user.target
-EOT'
+WantedBy=multi-user.target" | sudo tee /etc/systemd/system/node_exporter.service
 
-# Enable and start Node Exporter service
+# Reload systemd, then enable and start Node Exporter
 sudo systemctl daemon-reload
 sudo systemctl enable node_exporter
 sudo systemctl start node_exporter
-sudo systemctl status node_exporter --no-pager
 
-################################################################################
-# Install Grafana                                                             #
-################################################################################
+# Install Grafana for visualizing metrics collected by Prometheus
+# Add Grafana's APT repository to the system
+sudo apt install -y software-properties-common
+sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
+curl -fsSL https://packages.grafana.com/gpg.key | sudo tee /usr/share/keyrings/grafana-archive-keyring.gpg >/dev/null
 
-# Install dependencies for Grafana
-sudo apt-get install -y apt-transport-https software-properties-common
+# Install Grafana using the APT package manager
+sudo apt update
+sudo apt install -y grafana
 
-# Add Grafana GPG key and repository
-wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
-echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
-
-# Install Grafana
-sudo apt-get update
-sudo apt-get install -y grafana
-
-# Enable and start Grafana service
+# Enable and start the Grafana service
 sudo systemctl enable grafana-server
 sudo systemctl start grafana-server
-sudo systemctl status grafana-server --no-pager
 
-################################################################################
-# Completion Message                                                          #
-################################################################################
-echo "Prometheus, Node Exporter, and Grafana have been successfully installed and configured."
+# Display status of all services to verify successful installation
+sudo systemctl status prometheus
+sudo systemctl status node_exporter
+sudo systemctl status grafana-server
 
-################################################################################
-# Usage Instructions                                                          #
-################################################################################
-# To run this script, follow these steps:                                     #
-# 1. Save the script as install_monitoring.sh.                               #
-# 2. Make it executable: chmod +x install_monitoring.sh.                     #
-# 3. Run the script: sudo ./install_monitoring.sh.                           #
-# 4. Access the services:                                                    #
-#    - Prometheus: http://<your-server-ip>:9090                              #
-#    - Node Exporter: http://<your-server-ip>:9100                           #
-#    - Grafana: http://<your-server-ip>:3000 (Default login: admin/admin)    #
-################################################################################
+# Script completed message
+echo "Prometheus, Node Exporter, and Grafana installation completed successfully!"
