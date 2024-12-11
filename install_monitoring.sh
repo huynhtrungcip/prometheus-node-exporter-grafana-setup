@@ -2,8 +2,8 @@
 
 ################################################################################
 # Script to install Prometheus, Node Exporter, and Grafana on Ubuntu 20.04    #
-# Author: [Your Name]                                                        #
-# Date: [Date]                                                               #
+# Author: Trung Huynh Chi                                                       #
+# Date: 20/10/2024                                                               #
 # Description: This script automates the installation and configuration of   #
 # Prometheus, Node Exporter, and Grafana for monitoring and visualization.   #
 ################################################################################
